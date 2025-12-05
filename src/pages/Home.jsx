@@ -1,10 +1,13 @@
 import React from 'react';
 import logo from '../assets/logo.png';
+import { Navigate, useNavigate } from 'react-router-dom';
+
 
 export default function HomePage() {
-  const handleSignIn = () => {
-    window.location.href = '/login';
-  };
+const navigate = useNavigate();
+function handleSignIn() {
+navigate('/login');
+}
 
   return (
     <div style={styles.container}>
