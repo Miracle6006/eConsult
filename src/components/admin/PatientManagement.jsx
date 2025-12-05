@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 // BULLETPROOF DATA MANAGER – uses the SAME key as your Dashboard
 // ──────────────────────────────────────────────────────────────
 const DataManager = {
-  STORAGE_KEY: 'patient_profiles', // ←←← matches your AdminDashboard
+  STORAGE_KEY: 'patient_profiles',
 
   getPatients: () => {
     try {
@@ -13,7 +13,6 @@ const DataManager = {
       if (!raw) return [];
 
       const parsed = JSON.parse(raw);
-      // If someone accidentally saved an object {} instead of array []
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
       console.warn('Corrupted patient_profiles in localStorage → resetting to []');
@@ -26,6 +25,7 @@ const DataManager = {
     try {
       const safe = Array.isArray(patients) ? patients : [];
       localStorage.setItem(DataManager.STORAGE_KEY, JSON.stringify(safe));
+      window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('patients-updated'));
     } catch (e) {
       console.error('Failed to save patients:', e);
@@ -56,6 +56,7 @@ export default function PatientManagement() {
   const [showProfile, setShowProfile] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   const [formData, setFormData] = useState({
     name: '',
@@ -126,6 +127,11 @@ export default function PatientManagement() {
     headerSection: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 },
     header: { fontSize: 28, fontWeight: 700, color: '#1a1f2e', marginBottom: 8 },
     subtitle: { fontSize: 14, color: '#6b7280' },
+    headerControls: { display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' },
+    viewToggle: { display: 'flex', gap: 4, backgroundColor: '#fff', borderRadius: 8, padding: 4, border: '1px solid #e5e7eb' },
+    viewButton: { padding: '8px 16px', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' },
+    viewButtonActive: { backgroundColor: '#3b82f6', color: 'white' },
+    viewButtonInactive: { backgroundColor: 'transparent', color: '#6b7280' },
     addButton: { backgroundColor: '#10b981', color: 'white', padding: '12px 24px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 },
     searchBox: { width: '100%', maxWidth: 400, padding: '12px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, marginBottom: 24 },
     patientGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 },
@@ -136,6 +142,15 @@ export default function PatientManagement() {
     patientInfo: { fontSize: 14, color: '#6b7280', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 },
     statusBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 600, backgroundColor: '#d1fae5', color: '#065f46' },
     viewButton: { width: '100%', backgroundColor: '#3b82f6', color: 'white', padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, marginTop: 12 },
+    
+    // List view styles
+    listContainer: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
+    listHeader: { display: 'grid', gridTemplateColumns: '2fr 2fr 1.5fr 1fr 1fr 1fr', gap: 16, padding: '16px 20px', backgroundColor: '#f3f4f6', fontWeight: 600, fontSize: 14, color: '#374151', borderBottom: '2px solid #e5e7eb' },
+    listRow: { display: 'grid', gridTemplateColumns: '2fr 2fr 1.5fr 1fr 1fr 1fr', gap: 16, padding: '16px 20px', borderBottom: '1px solid #e5e7eb', alignItems: 'center', cursor: 'pointer', transition: 'background-color 0.2s' },
+    listCell: { fontSize: 14, color: '#1a1f2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+    listActions: { display: 'flex', gap: 8 },
+    actionButton: { padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
+    
     modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 },
     modalCard: { backgroundColor: '#fff', borderRadius: 16, maxWidth: 700, width: '100%', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' },
     modalHeader: { padding: 24, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
@@ -165,9 +180,32 @@ export default function PatientManagement() {
           <h1 style={styles.header}>View all Patients</h1>
           <p style={styles.subtitle}>Total Patients: {patients.length}</p>
         </div>
-        <button style={styles.addButton} onClick={() => setShowAddForm(true)}>
-          Add New Patient
-        </button>
+        <div style={styles.headerControls}>
+          {/* View Toggle */}
+          <div style={styles.viewToggle}>
+            <button
+              style={{
+                ...styles.viewButton,
+                ...(viewMode === 'grid' ? styles.viewButtonActive : styles.viewButtonInactive)
+              }}
+              onClick={() => setViewMode('grid')}
+            >
+              Grid
+            </button>
+            <button
+              style={{
+                ...styles.viewButton,
+                ...(viewMode === 'list' ? styles.viewButtonActive : styles.viewButtonInactive)
+              }}
+              onClick={() => setViewMode('list')}
+            >
+              List
+            </button>
+          </div>
+          <button style={styles.addButton} onClick={() => setShowAddForm(true)}>
+            Add New Patient
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -179,45 +217,92 @@ export default function PatientManagement() {
         style={styles.searchBox}
       />
 
-      {/* Patient Grid */}
-      <div style={styles.patientGrid}>
-        {filteredPatients.length === 0 ? (
-          <p style={{ gridColumn: '1/-1', textAlign: 'center', color: '#6b7280', fontSize: 18 }}>
-            {patients.length === 0 ? 'No patients yet. Click "Add New Patient" to get started!' : 'No patients match your search.'}
-          </p>
-        ) : (
-          filteredPatients.map((patient) => (
-            <div
-              key={patient.id}
-              style={styles.patientCard}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-              }}
-            >
-              <div style={styles.patientHeader}>
-                <div>
-                  <div style={styles.patientName}>{patient.name || 'Unnamed'}</div>
-                  <span style={styles.patientId}>{patient.id}</span>
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div style={styles.patientGrid}>
+          {filteredPatients.length === 0 ? (
+            <p style={{ gridColumn: '1/-1', textAlign: 'center', color: '#6b7280', fontSize: 18 }}>
+              {patients.length === 0 ? 'No patients yet. Click "Add New Patient" to get started!' : 'No patients match your search.'}
+            </p>
+          ) : (
+            filteredPatients.map((patient) => (
+              <div
+                key={patient.id}
+                style={styles.patientCard}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }}
+              >
+                <div style={styles.patientHeader}>
+                  <div>
+                    <div style={styles.patientName}>{patient.name || 'Unnamed'}</div>
+                    <span style={styles.patientId}>{patient.id}</span>
+                  </div>
+                  <span style={styles.statusBadge}>{patient.status || 'Active'}</span>
                 </div>
-                <span style={styles.statusBadge}>{patient.status || 'Active'}</span>
-              </div>
-              <div style={styles.patientInfo}>Email: {patient.email}</div>
-              <div style={styles.patientInfo}>Phone: {patient.phone}</div>
-              <div style={styles.patientInfo}>Age: {patient.age || '?'} • {patient.gender || '?'}</div>
-              <div style={styles.patientInfo}>Blood Group: {patient.bloodGroup}</div>
+                <div style={styles.patientInfo}>Email: {patient.email}</div>
+                <div style={styles.patientInfo}>Phone: {patient.phone}</div>
+                <div style={styles.patientInfo}>Age: {patient.age || '?'} • {patient.gender || '?'}</div>
+                <div style={styles.patientInfo}>Blood Group: {patient.bloodGroup}</div>
 
-              <button style={styles.viewButton} onClick={() => { setSelectedPatient(patient); setShowProfile(true); }}>
-                View Full Profile
-              </button>
+                <button style={styles.viewButton} onClick={() => { setSelectedPatient(patient); setShowProfile(true); }}>
+                  View Full Profile
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* List View */}
+      {viewMode === 'list' && (
+        <div style={styles.listContainer}>
+          <div style={styles.listHeader}>
+            <div>Name</div>
+            <div>Email</div>
+            <div>Phone</div>
+            <div>Age</div>
+            <div>Blood Group</div>
+            <div>Actions</div>
+          </div>
+          {filteredPatients.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#6b7280', fontSize: 16 }}>
+              {patients.length === 0 ? 'No patients yet. Click "Add New Patient" to get started!' : 'No patients match your search.'}
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            filteredPatients.map((patient) => (
+              <div
+                key={patient.id}
+                style={styles.listRow}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <div style={styles.listCell}>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>{patient.name || 'Unnamed'}</div>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>{patient.id}</div>
+                </div>
+                <div style={styles.listCell}>{patient.email}</div>
+                <div style={styles.listCell}>{patient.phone}</div>
+                <div style={styles.listCell}>{patient.age || 'N/A'}</div>
+                <div style={styles.listCell}>{patient.bloodGroup}</div>
+                <div style={styles.listActions}>
+                  <button
+                    style={{ ...styles.actionButton, backgroundColor: '#3b82f6', color: 'white' }}
+                    onClick={() => { setSelectedPatient(patient); setShowProfile(true); }}
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Add Patient Modal - COMPLETE FORM */}
       {showAddForm && (
