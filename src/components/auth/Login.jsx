@@ -137,7 +137,7 @@ export default function Login() {
             <label style={styles.label}>Login As</label>
             <select value={role} onChange={(e) => setRole(e.target.value)} style={styles.select}>
               <option value="Patient">Patient</option>
-              <option value="Staff">Doctor / Nurse / Staff</option>
+              <option value="Staff">Staff</option>
               <option value="Admin">Administrator</option>
             </select>
           </div>

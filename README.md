@@ -1,7 +1,7 @@
 *File: `README.md`**
 
 ```markdown
-# eConsult - Patient & Clinic Management Application
+# eConsult - Patient & Clinic Management System
 
 A comprehensive web application for managing patient appointments, clinic operations, and administrative tasks.
 

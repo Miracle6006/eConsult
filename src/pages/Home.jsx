@@ -164,7 +164,7 @@ const styles = {
   // HERO
   hero: {
     height: '90vh',
-    background: `linear-gradient(rgba(80, 134, 178, 0.45), rgba(51, 110, 178, 0.65)), url('https://images.unsplash.com/photo-1551601678-0c0b5f5bc5d6?q=80&w=2070&auto=format') center/cover no-repeat`,
+    background: `linear-gradient(rgba(4, 140, 250, 0.45), rgba(4, 119, 250, 0.65)), url('https://images.unsplash.com/photo-1551601678-0c0b5f5bc5d6?q=80&w=2070&auto=format') center/cover no-repeat`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -187,7 +187,7 @@ const styles = {
   },
 
   // STATS – LIGHT BLUE CARDS
-  statsSection: { padding: '120px 20px', backgroundColor: '#f0f9ff' },
+  statsSection: { padding: '120px 20px', backgroundColor: '#76c5f9ff' },
   statsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -209,7 +209,7 @@ const styles = {
   statLabel: { fontSize: '19px', marginTop: '14px', fontWeight: '600', color: '#1e40af' },
 
   // SERVICES
-  services: { padding: '130px 20px', backgroundColor: '#ffffff' },
+  services: { padding: '130px 20px', backgroundColor: '#9ccaf1ff' },
   sectionTitle: { 
     textAlign: 'center', 
     fontSize: '44px', 
@@ -240,7 +240,7 @@ const styles = {
   // MISSION
   mission: { 
     padding: '140px 20px', 
-    background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)', 
+    background: 'linear-gradient(135deg, #03b0faff, #9cbbeeff)', 
     color: 'white', 
     textAlign: 'center' 
   },
