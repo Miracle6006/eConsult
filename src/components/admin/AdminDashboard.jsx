@@ -52,9 +52,9 @@ export default function AdminDashboard() {
   console.log('Pie Data:', pieData)
 
   const billingStatusData = [
-    { status: 'Paid', count: invoices.filter(i => i.paid).length },
-    { status: 'Pending', count: invoices.filter(i => !i.paid).length },
-    { status: 'Confirmed', count: invoices.filter(i => i.confirmed).length }
+    { status: 'Paid', count: (invoices || []).filter(i => i.paid).length },
+    { status: 'Pending', count: (invoices || []).filter(i => !i.paid).length },
+    { status: 'Confirmed', count: (invoices || []).filter(i => i.confirmed).length }
   ]
 
   const styles = {
