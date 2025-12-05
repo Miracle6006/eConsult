@@ -6,29 +6,29 @@ import {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([])
-  const [patients, setPatients] = useState([])
-
+  const [patients, setPatients] = useState({})
   const [appointments, setAppointments] = useState([])
   const [invoices, setInvoices] = useState([])
 
-  // ONLY THIS PART CHANGED — now reads staff from the correct place + live sync
   useEffect(() => {
     const loadData = () => {
-      const savedUsers = JSON.parse(localStorage.getItem('users') )
-      const savedPatient = JSON.parse(localStorage.getItem('patient_profiles'))
-    console.log('Saved Users:', savedUsers)
+      // Add fallback values for when localStorage is empty
+      const savedUsers = JSON.parse(localStorage.getItem('users') || '[]')
+      const savedPatient = JSON.parse(localStorage.getItem('patient_profiles') || '{}')
+      
+      console.log('Saved Users:', savedUsers)
       console.log('Saved Patients:', savedPatient)
-      const raw = JSON.parse(sessionStorage.getItem('econsult_data_v1') || '{}')  // sessionStorage, not localStorage
+      
+      const raw = JSON.parse(sessionStorage.getItem('econsult_data_v1') || '{}')
 
-      setUsers(savedUsers)
-      setPatients(savedPatient)
+      setUsers(savedUsers || [])
+      setPatients(savedPatient || {})
       setAppointments(raw.appointments || [])
       setInvoices(raw.invoices || [])
     }
 
-    loadData() // initial load
+    loadData()
 
-    // Listen for new staff added from StaffManagement
     window.addEventListener('staff-updated', loadData)
     window.addEventListener('storage', loadData)
 
@@ -38,17 +38,19 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  // This is the correct staff count now (from econsult_data_v1.staff)
-  const staffCount = users.staff?.length
-  const patientCount = Object.keys(patients).length 
-  const billingCount = invoices.length
+  // Safe calculations with proper null checks
+  const staffCount = Array.isArray(users) ? users.length : (users?.staff?.length || 0)
+  const patientCount = patients ? Object.keys(patients).length : 0
+  const billingCount = invoices?.length || 0
 
   const pieData = [
     { name: 'Staff', value: staffCount, color: '#10b981' },
     { name: 'Patients', value: patientCount, color: '#8b5cf6' },
     { name: 'Billings', value: billingCount, color: '#facc15' }
   ]
-console.log(pieData)
+  
+  console.log('Pie Data:', pieData)
+
   const billingStatusData = [
     { status: 'Paid', count: invoices.filter(i => i.paid).length },
     { status: 'Pending', count: invoices.filter(i => !i.paid).length },
