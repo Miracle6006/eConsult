@@ -1,62 +1,109 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
-} from 'recharts'
+} from 'recharts';
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState([])
-  const [patients, setPatients] = useState({})
-  const [appointments, setAppointments] = useState([])
-  const [invoices, setInvoices] = useState([])
+  // Always start with correct types
+  const [users, setUsers] = useState([]);           // staff/users → array
+  const [patients, setPatients] = useState({});      // patient_profiles → object {id: {...}}
+  const [appointments, setAppointments] = useState([]); // from econsult_data_v1
+  const [invoices, setInvoices] = useState([]);         // from econsult_data_v1
 
   useEffect(() => {
     const loadData = () => {
-      // Add fallback values for when localStorage is empty
-      const savedUsers = JSON.parse(localStorage.getItem('users') || '[]')
-      const savedPatient = JSON.parse(localStorage.getItem('patient_profiles') || '{}')
-      
-      console.log('Saved Users:', savedUsers)
-      console.log('Saved Patients:', savedPatient)
-      
-      const raw = JSON.parse(sessionStorage.getItem('econsult_data_v1') || '{}')
+      try {
+        // ── 1. USERS / STAFF ───────────────────────────────
+        const rawUsers = localStorage.getItem('users');
+        const savedUsers = rawUsers ? JSON.parse(rawUsers) : [];
+        setUsers(Array.isArray(savedUsers) ? savedUsers : []);
 
-      setUsers(savedUsers || [])
-      setPatients(savedPatient || {})
-      setAppointments(raw.appointments || [])
-      setInvoices(raw.invoices || [])
-    }
+        // ── 2. PATIENTS ─────────────────────────────────────
+        const rawPatients = localStorage.getItem('patient_profiles');
+        let savedPatients = {};
+        if (rawPatients) {
+          try {
+            const parsed = JSON.parse(rawPatients);
+            savedPatients = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+          } catch (e) {
+            console.warn('Corrupted patient_profiles → resetting to {}');
+            localStorage.setItem('patient_profiles', '{}'); // auto-heal
+            savedPatients = {};
+          }
+        }
+        setPatients(savedPatients);
 
-    loadData()
+        // ── 3. APPOINTMENTS & INVOICES (now from localStorage) ─────
+        const rawAppData = localStorage.getItem('econsult_data_v1');
+        let appData = { appointments: [], invoices: [] };
 
-    window.addEventListener('staff-updated', loadData)
-    window.addEventListener('storage', loadData)
+        if (rawAppData) {
+          try {
+            const parsed = JSON.parse(rawAppData);
+            if (parsed && typeof parsed === 'object') {
+              appData = {
+                appointments: Array.isArray(parsed.appointments) ? parsed.appointments : [],
+                invoices: Array.isArray(parsed.invoices) ? parsed.invoices : []
+              };
+            }
+          } catch (e) {
+            console.warn('Corrupted econsult_data_v1 → resetting');
+            localStorage.setItem('econsult_data_v1', JSON.stringify({ appointments: [], invoices: [] }));
+          }
+        } else {
+          // First time? Initialize it
+          localStorage.setItem('econsult_data_v1', JSON.stringify({ appointments: [], invoices: [] }));
+        }
+
+        setAppointments(appData.appointments);
+        setInvoices(appData.invoices);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        setUsers([]);
+        setPatients({});
+        setAppointments([]);
+        setInvoices([]);
+      }
+    };
+
+    loadData();
+
+    // Refresh dashboard when any relevant data changes
+    const events = ['staff-updated', 'patient-updated', 'appointment-updated', 'invoice-updated', 'storage'];
+    events.forEach(ev => window.addEventListener(ev, loadData));
 
     return () => {
-      window.removeEventListener('staff-updated', loadData)
-      window.removeEventListener('storage', loadData)
-    }
-  }, [])
+      events.forEach(ev => window.removeEventListener(ev, loadData));
+    };
+  }, []);
 
-  // Safe calculations with proper null checks
-  const staffCount = Array.isArray(users) ? users.length : (users?.staff?.length || 0)
-  const patientCount = patients ? Object.keys(patients).length : 0
-  const billingCount = invoices?.length || 0
+  // ── Safe counters (100% crash-proof) ─────────────────────
+  const staffCount = Array.isArray(users) ? users.length : 0;
+
+  const patientCount = patients && typeof patients === 'object' && !Array.isArray(patients)
+    ? Object.keys(patients).length
+    : 0;
+
+  const billingCount = Array.isArray(invoices) ? invoices.length : 0;
 
   const pieData = [
     { name: 'Staff', value: staffCount, color: '#10b981' },
     { name: 'Patients', value: patientCount, color: '#8b5cf6' },
     { name: 'Billings', value: billingCount, color: '#facc15' }
-  ]
-  
-  console.log('Pie Data:', pieData)
+  ];
+
+  const safeInvoices = Array.isArray(invoices) ? invoices : [];
 
   const billingStatusData = [
-    { status: 'Paid', count: (invoices || []).filter(i => i.paid).length },
-    { status: 'Pending', count: (invoices || []).filter(i => !i.paid).length },
-    { status: 'Confirmed', count: (invoices || []).filter(i => i.confirmed).length }
-  ]
+    { status: 'Paid',      count: safeInvoices.filter(i => i.paid).length },
+    { status: 'Pending',   count: safeInvoices.filter(i => !i.paid).length },
+    { status: 'Confirmed', count: safeInvoices.filter(i => i.confirmed).length }
+  ];
 
+  console.log('Pie Data:', pieData);
+
+  // ── Styles ───────────────────────────────────────────────
   const styles = {
     container: { padding: 24, backgroundColor: '#f9fafb', minHeight: '100vh' },
     header: { marginBottom: 32 },
@@ -65,7 +112,7 @@ export default function AdminDashboard() {
     chartsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 },
     chartCard: { backgroundColor: '#fff', padding: 24, borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' },
     chartTitle: { fontSize: 18, fontWeight: 600, color: '#1a1f2e', marginBottom: 20 }
-  }
+  };
 
   return (
     <div style={styles.container}>
@@ -77,7 +124,7 @@ export default function AdminDashboard() {
       <div style={styles.chartsGrid}>
         {/* Pie Chart */}
         <div style={styles.chartCard}>
-          <h3 style={styles.chartTitle}>Total Users & Billings</h3>
+          <h3 style={styles.chartTitle}>Total Overview</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -88,7 +135,7 @@ export default function AdminDashboard() {
                 cy="50%"
                 outerRadius={100}
                 innerRadius={50}
-                label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 isAnimationActive
                 animationDuration={1000}
               >
@@ -97,24 +144,24 @@ export default function AdminDashboard() {
                 ))}
               </Pie>
               <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 12 }} />
-              <Tooltip wrapperStyle={{ fontSize: 12 }} />
+              <Tooltip formatter={(v) => v} wrapperStyle={{ fontSize: 12 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Bar Chart */}
         <div style={styles.chartCard}>
-          <h3 style={styles.chartTitle}>Billings Status</h3>
+          <h3 style={styles.chartTitle}>Billing Status</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={billingStatusData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-              <XAxis dataKey="status" stroke="#1f05b1ff" style={{ fontSize: 12 }} />
-              <YAxis allowDecimals={false} stroke="#145beaff" style={{ fontSize: 12 }} />
+              <XAxis dataKey="status" style={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} style={{ fontSize: 12 }} />
               <Tooltip wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="count" fill="#3bf63bff" radius={[4,4,0,0]} animationDuration={800} />
+              <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} animationDuration={800} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
     </div>
-  )
+  );
 }
