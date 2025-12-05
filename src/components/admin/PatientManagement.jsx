@@ -120,7 +120,7 @@ export default function PatientManagement() {
     (p.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ────────────────────── STYLES (exactly as you had) ──────────────────────
+  // ────────────────────── STYLES ──────────────────────
   const styles = {
     container: { padding: 32, backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'Arial, sans-serif' },
     headerSection: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 },
@@ -145,6 +145,8 @@ export default function PatientManagement() {
     formGroup: { marginBottom: 16 },
     label: { display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 },
     input: { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box' },
+    textarea: { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', minHeight: 80, fontFamily: 'inherit' },
+    select: { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box' },
     formRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
     submitButton: { width: '100%', backgroundColor: '#10b981', color: 'white', padding: '12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, marginTop: 8 },
     profileSection: { marginBottom: 24 },
@@ -217,7 +219,7 @@ export default function PatientManagement() {
         )}
       </div>
 
-      {/* Add Patient Modal */}
+      {/* Add Patient Modal - COMPLETE FORM */}
       {showAddForm && (
         <div style={styles.modal} onClick={() => setShowAddForm(false)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
@@ -226,29 +228,73 @@ export default function PatientManagement() {
               <button style={styles.closeButton} onClick={() => setShowAddForm(false)}>Close</button>
             </div>
             <div style={styles.modalBody}>
-              {/* All your form fields – unchanged */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Full Name *</label>
-                <input type="text" name="name" value={formData.name} onChange={handleInputChange} style={styles.input} />
+                <input type="text" name="name" value={formData.name} onChange={handleInputChange} style={styles.input} placeholder="John Doe" />
               </div>
+
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Email *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} style={styles.input} />
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} style={styles.input} placeholder="john@example.com" />
                 </div>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Phone *</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={styles.input} />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={styles.input} placeholder="+234 123 456 7890" />
                 </div>
               </div>
-              {/* ... rest of your form fields (age, gender, blood group, etc.) ... */}
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Age</label>
+                  <input type="number" name="age" value={formData.age} onChange={handleInputChange} style={styles.input} placeholder="30" />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Gender</label>
+                  <select name="gender" value={formData.gender} onChange={handleInputChange} style={styles.select}>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Blood Group</label>
+                <select name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange} style={styles.select}>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Address</label>
+                <textarea name="address" value={formData.address} onChange={handleInputChange} style={styles.textarea} placeholder="123 Main Street, Lagos, Nigeria" />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Medical History</label>
+                <textarea name="medicalHistory" value={formData.medicalHistory} onChange={handleInputChange} style={styles.textarea} placeholder="Any previous medical conditions, surgeries, etc." />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Allergies</label>
+                <textarea name="allergies" value={formData.allergies} onChange={handleInputChange} style={styles.textarea} placeholder="List any known allergies" />
+              </div>
+
               <button onClick={handleAddPatient} style={styles.submitButton}>Add Patient</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Patient Profile Modal */}
+      {/* Patient Profile Modal - COMPLETE PROFILE VIEW */}
       {showProfile && selectedPatient && (
         <div style={styles.modal} onClick={() => setShowProfile(false)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
@@ -257,8 +303,88 @@ export default function PatientManagement() {
               <button style={styles.closeButton} onClick={() => setShowProfile(false)}>Close</button>
             </div>
             <div style={styles.modalBody}>
-              {/* Your full profile display – unchanged */}
-              {/* ... all your profile sections ... */}
+              {/* Personal Information */}
+              <div style={styles.profileSection}>
+                <h3 style={styles.sectionTitle}>Personal Information</h3>
+                <div style={styles.profileRow}>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Patient ID</div>
+                    <div style={styles.fieldValue}>{selectedPatient.id}</div>
+                  </div>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Status</div>
+                    <div style={styles.fieldValue}>
+                      <span style={styles.statusBadge}>{selectedPatient.status || 'Active'}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={styles.profileRow}>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Full Name</div>
+                    <div style={styles.fieldValue}>{selectedPatient.name}</div>
+                  </div>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Email</div>
+                    <div style={styles.fieldValue}>{selectedPatient.email}</div>
+                  </div>
+                </div>
+                <div style={styles.profileRow}>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Phone</div>
+                    <div style={styles.fieldValue}>{selectedPatient.phone}</div>
+                  </div>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Registered Date</div>
+                    <div style={styles.fieldValue}>{selectedPatient.registeredDate || 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Demographics */}
+              <div style={styles.profileSection}>
+                <h3 style={styles.sectionTitle}>Demographics</h3>
+                <div style={styles.profileRow}>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Age</div>
+                    <div style={styles.fieldValue}>{selectedPatient.age || 'N/A'}</div>
+                  </div>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Gender</div>
+                    <div style={styles.fieldValue}>{selectedPatient.gender || 'N/A'}</div>
+                  </div>
+                </div>
+                <div style={styles.profileRow}>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Blood Group</div>
+                    <div style={styles.fieldValue}>{selectedPatient.bloodGroup || 'N/A'}</div>
+                  </div>
+                  <div style={styles.profileField}>
+                    <div style={styles.fieldLabel}>Last Visit</div>
+                    <div style={styles.fieldValue}>{selectedPatient.lastVisit || 'No visits yet'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div style={styles.profileSection}>
+                <h3 style={styles.sectionTitle}>Address</h3>
+                <div style={styles.profileField}>
+                  <div style={styles.fieldValue}>{selectedPatient.address || 'No address provided'}</div>
+                </div>
+              </div>
+
+              {/* Medical Information */}
+              <div style={styles.profileSection}>
+                <h3 style={styles.sectionTitle}>Medical Information</h3>
+                <div style={styles.profileField}>
+                  <div style={styles.fieldLabel}>Medical History</div>
+                  <div style={styles.fieldValue}>{selectedPatient.medicalHistory || 'None'}</div>
+                </div>
+                <div style={styles.profileField}>
+                  <div style={styles.fieldLabel}>Allergies</div>
+                  <div style={styles.fieldValue}>{selectedPatient.allergies || 'None'}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
